@@ -3,6 +3,7 @@ package com.example.ashoksubedi.recyclerview;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,27 +22,41 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class signin extends AppCompatActivity {
-
+    private SharedPreferences sharedPreferences;
+    private static final String MY_PREF = "myPref";
+    private EditText emailEditText;
+    private EditText passwordEditText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signin);
+
+        emailEditText = (EditText) findViewById(R.id.email);
+        passwordEditText = (EditText) findViewById(R.id.pass);
+        String email = getSharedPreferences(MY_PREF, MODE_PRIVATE).getString("email", "");
+
+        emailEditText.setText(email);
+
+
     }
     public void connectToTomcat(View view){
 
         //
 
-        final Map<String, String> params = new HashMap<String, String>();
+        final Map<String, String> params = new HashMap<>();
 
 
         // no user is logged in, so we must connect to the server
         RequestQueue queue = Volley.newRequestQueue(this);
 
         final Context context = this;
-        EditText emaileditText = (EditText) findViewById(R.id.email);
-        EditText passwordeditText = (EditText) findViewById(R.id.pass);
-        final String email = emaileditText.getText().toString();
-        final String pw = passwordeditText.getText().toString();
+
+        final String email = emailEditText.getText().toString();
+        final String pw = passwordEditText.getText().toString();
+        SharedPreferences.Editor editor = getSharedPreferences(MY_PREF, MODE_PRIVATE).edit();
+        editor.putString("email", email);
+        editor.apply();
+
         final ProgressDialog progressDialog =  new ProgressDialog(this);
         if(email.isEmpty() || pw.isEmpty()){
             progressDialog.dismiss();
@@ -51,9 +66,8 @@ public class signin extends AppCompatActivity {
         params.put("email", email);
         params.put("password", pw);
 
-        String url = "http://52.25.32.130:8080//TomcatForm/servlet/TomcatForm";
 
-
+        String url = "http://ec2-54-202-112-215.us-west-2.compute.amazonaws.com:8080/WebProject/AndroidLogIn/";
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>()
@@ -63,10 +77,11 @@ public class signin extends AppCompatActivity {
 
                         Log.d("response", response);
 
-                        if(response.contains("You have entered an invalid email or password")){
+                        if(response.contains("1")){
                             Intent resultPage = new Intent(signin.this, signin.class);
                             resultPage.putExtra("result", response);
                             startActivity(resultPage);
+                            Toast.makeText(getApplicationContext(), "Invalid User or Passwords. Please try again", Toast.LENGTH_LONG).show();
                         }
                         else {
                             Intent resultPage = new Intent(signin.this, searchAct.class);
@@ -99,7 +114,7 @@ public class signin extends AppCompatActivity {
         queue.add(postRequest);
 
 
-        return ;
+
     }
 
 
